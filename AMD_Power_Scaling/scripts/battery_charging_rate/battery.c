@@ -2,16 +2,9 @@
 /*
  *  battery.c - ACPI Battery Driver (Revision: 3.0)
  *
- *  Added feature to change charging rate of the battery by Shamith Achanta <shamith2@illinois.edu>
- *      Added:
- *          function acpi_battery_change_charging_rate
- *          function acpi_battery_change_charging_rate_show
- *          function acpi_battery_change_charging_rate_store
- *          struct battery_charge_rate_attr
- *
- *      Modified:
- *          function sysfs_add_battery: line 906, 950
- *          function sysfs_remove_battery: line 962
+ *	Revision 3.0:
+ *		- Added feature to change charging rate of battery from userspace
+ *		- Written by Shamith Achanta <shamith2@illinois.edu>
  *
  *  Copyright (C) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
  *  Copyright (C) 2004-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
@@ -628,7 +621,8 @@ Function Description:
     This function changes the battery charging rate to the specified charging_rate
 
 Parameters:
-    charging_rate: An integer from 0 to 100 containing the battery charging rate in percentage. At 100%, the battery can be charged at maximum current.
+    charging_rate: An integer from 0 to 100 containing the battery charging rate in percentage. 
+				   At 100%, the battery can be charged at maximum current.
 
 Return Value:
     status of the operation: 
