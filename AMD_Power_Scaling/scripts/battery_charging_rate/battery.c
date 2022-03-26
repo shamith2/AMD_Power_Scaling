@@ -10,8 +10,8 @@
  *          struct battery_charge_rate_attr
  *
  *      Modified:
- *          function sysfs_add_battery: line 948
- *          function sysfs_remove_battery: line 960
+ *          function sysfs_add_battery: line 906, 950
+ *          function sysfs_remove_battery: line 962
  *
  *  Copyright (C) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
  *  Copyright (C) 2004-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
@@ -903,6 +903,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
 {
 	struct power_supply_config psy_cfg = { .drv_data = battery, };
 	bool full_cap_broken = false;
+	int retVal;
 
 	if (!ACPI_BATTERY_CAPACITY_VALID(battery->full_charge_capacity) &&
 	    !ACPI_BATTERY_CAPACITY_VALID(battery->design_capacity))
@@ -946,7 +947,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
 		return result;
 	}
 	battery_hook_add_battery(battery);
-    device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
+    retVal = device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
 	return device_create_file(&battery->bat->dev, &alarm_attr);
 }
 
