@@ -674,7 +674,7 @@ static ssize_t acpi_battery_change_charging_rate_show(struct device *dev, struct
 static ssize_t acpi_battery_change_charging_rate_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
-
+	int retVal;
     int charging_rate;
 
     // if buffer is not properly formatted
@@ -684,7 +684,7 @@ static ssize_t acpi_battery_change_charging_rate_store(struct device *dev, struc
     }
 
     // change battery charging rate
-    int retVal = acpi_battery_change_charging_rate(battery, charging_rate);
+    retVal = acpi_battery_change_charging_rate(battery, charging_rate);
 
     // return an error if battery charging rate cannot be changed
     if (retVal)
@@ -946,7 +946,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
 		return result;
 	}
 	battery_hook_add_battery(battery);
-    int retVal = device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
+    device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
 	return device_create_file(&battery->bat->dev, &alarm_attr);
 }
 
