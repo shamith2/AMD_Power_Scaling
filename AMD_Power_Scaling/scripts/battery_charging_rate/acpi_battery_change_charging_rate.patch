@@ -1,5 +1,4 @@
 diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
-index dc208f5f5a1f..b3a2ac2250c1 100644
 --- a/drivers/acpi/battery.c
 +++ b/drivers/acpi/battery.c
 @@ -1,6 +1,10 @@
