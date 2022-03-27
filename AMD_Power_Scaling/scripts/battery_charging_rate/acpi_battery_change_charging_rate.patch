@@ -1,7 +1,7 @@
-diff --git a/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c b/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
-index 44078cf..d685e88 100644
---- a/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
-+++ b/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
+diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
+index dc208f5f5a1f..b3a2ac2250c1 100644
+--- a/drivers/acpi/battery.c
++++ b/drivers/acpi/battery.c
 @@ -1,6 +1,10 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  /*
@@ -104,7 +104,7 @@ index 44078cf..d685e88 100644
  {
  	struct power_supply_config psy_cfg = { .drv_data = battery, };
  	bool full_cap_broken = false;
-+	int retVal;
++	int retVal = 0;
  
  	if (!ACPI_BATTERY_CAPACITY_VALID(battery->full_charge_capacity) &&
  	    !ACPI_BATTERY_CAPACITY_VALID(battery->design_capacity))
@@ -112,7 +112,7 @@ index 44078cf..d685e88 100644
  		return result;
  	}
  	battery_hook_add_battery(battery);
-+ retVal = device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
++	retVal = device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
  	return device_create_file(&battery->bat->dev, &alarm_attr);
  }
  
@@ -120,7 +120,7 @@ index 44078cf..d685e88 100644
  		return;
  	}
  	battery_hook_remove_battery(battery);
-+ device_remove_file(&battery->bat->dev, &battery_charge_rate_attr);
++	device_remove_file(&battery->bat->dev, &battery_charge_rate_attr);
  	device_remove_file(&battery->bat->dev, &alarm_attr);
  	power_supply_unregister(battery->bat);
  	battery->bat = NULL;
