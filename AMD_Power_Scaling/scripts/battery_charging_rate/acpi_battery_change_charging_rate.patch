@@ -23,11 +23,11 @@ index dc208f5f5a1f..b3a2ac2250c1 100644
 +    This function changes the battery charging rate to the specified charging_rate
 +
 +Parameters:
-+    charging_rate: An integer from 0 to 100 containing the battery charging rate in percentage. 
++    charging_rate: An integer from 0 to 100 containing the battery charging rate in percentage.
 +				   At 100%, the battery can be charged at maximum current.
 +
 +Return Value:
-+    status of the operation: 
++    status of the operation:
 +      0: successful
 +      -ENODEV: unsucessful
 +*/
@@ -87,7 +87,7 @@ index dc208f5f5a1f..b3a2ac2250c1 100644
 +    {
 +        return retVal;
 +    }
-+	
++
 +    return count;
 +}
 +
