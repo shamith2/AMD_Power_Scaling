@@ -897,7 +897,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
 {
 	struct power_supply_config psy_cfg = { .drv_data = battery, };
 	bool full_cap_broken = false;
-	int retVal;
+    int retVal;
 
 	if (!ACPI_BATTERY_CAPACITY_VALID(battery->full_charge_capacity) &&
 	    !ACPI_BATTERY_CAPACITY_VALID(battery->design_capacity))
