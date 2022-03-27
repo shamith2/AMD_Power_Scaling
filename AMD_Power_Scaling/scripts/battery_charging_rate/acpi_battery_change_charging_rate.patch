@@ -1,0 +1,126 @@
+diff --git a/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c b/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
+index 44078cf..d685e88 100644
+--- a/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
++++ b/AMD_Power_Scaling/scripts/battery_charging_rate/battery.c
+@@ -1,6 +1,10 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+- *  battery.c - ACPI Battery Driver (Revision: 2.0)
++ *  battery.c - ACPI Battery Driver (Revision: 3.0)
++ *
++ *	Revision 3.0:
++ *		Added feature to change charging rate of battery from userspace
++ *		Written by Shamith Achanta <shamith2@illinois.edu>
+  *
+  *  Copyright (C) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
+  *  Copyright (C) 2004-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
+@@ -612,6 +616,85 @@ static int acpi_battery_get_state(struct acpi_battery *battery)
+ 	return result;
+ }
+ 
++/*
++Function Description:
++    This function changes the battery charging rate to the specified charging_rate
++
++Parameters:
++    charging_rate: An integer from 0 to 100 containing the battery charging rate in percentage. 
++				   At 100%, the battery can be charged at maximum current.
++
++Return Value:
++    status of the operation: 
++      0: successful
++      -ENODEV: unsucessful
++*/
++static int acpi_battery_change_charging_rate(struct acpi_battery *battery, const int charging_rate)
++{
++    acpi_status status = 0;
++
++	// if battery is not present or battery is not charging or issue with charging adapter or battery is full or battery charging rate is undefined
++    if (!acpi_battery_present(battery) || battery->state & ACPI_BATTERY_STATE_CHARGING || \
++        acpi_battery_handle_discharging(battery) == POWER_SUPPLY_STATUS_NOT_CHARGING || acpi_battery_is_charged(battery) || \
++        battery->rate_now == ACPI_BATTERY_VALUE_UNKNOWN)
++    {
++		return -ENODEV;
++    }
++
++    acpi_handle_debug(battery->device->handle, "Current Charging Rate is %d\n", battery->rate_now);
++
++	// change battery charging rate
++    mutex_lock(&battery->lock);
++	status = acpi_execute_simple_method(battery->device->handle, "_BTH", charging_rate);
++	mutex_unlock(&battery->lock);
++
++	if (ACPI_FAILURE(status))
++    {
++		return -ENODEV;
++    }
++
++	acpi_handle_debug(battery->device->handle, "Charging Rate set to %d\n", battery->rate_now);
++
++	return 0;
++}
++
++static ssize_t acpi_battery_change_charging_rate_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
++
++	return sprintf(buf, "%d\n", battery->rate_now);
++}
++
++static ssize_t acpi_battery_change_charging_rate_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++    struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
++	int retVal;
++    int charging_rate;
++
++    // if buffer is not properly formatted
++    if (sscanf(buf, "%d\n", &charging_rate) != 1)
++    {
++        return -EIO;
++    }
++
++    // change battery charging rate
++    retVal = acpi_battery_change_charging_rate(battery, charging_rate);
++
++    // return an error if battery charging rate cannot be changed
++    if (retVal)
++    {
++        return retVal;
++    }
++	
++    return count;
++}
++
++static const struct device_attribute battery_charge_rate_attr = {
++	.attr = {.name = "charging_rate", .mode = 0644},
++	.show = acpi_battery_change_charging_rate_show,
++	.store = acpi_battery_change_charging_rate_store
++};
++
+ static int acpi_battery_set_alarm(struct acpi_battery *battery)
+ {
+ 	acpi_status status = 0;
+@@ -814,6 +897,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
+ {
+ 	struct power_supply_config psy_cfg = { .drv_data = battery, };
+ 	bool full_cap_broken = false;
++	int retVal;
+ 
+ 	if (!ACPI_BATTERY_CAPACITY_VALID(battery->full_charge_capacity) &&
+ 	    !ACPI_BATTERY_CAPACITY_VALID(battery->design_capacity))
+@@ -857,6 +941,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
+ 		return result;
+ 	}
+ 	battery_hook_add_battery(battery);
++ retVal = device_create_file(&battery->bat->dev, &battery_charge_rate_attr);
+ 	return device_create_file(&battery->bat->dev, &alarm_attr);
+ }
+ 
+@@ -868,6 +953,7 @@ static void sysfs_remove_battery(struct acpi_battery *battery)
+ 		return;
+ 	}
+ 	battery_hook_remove_battery(battery);
++ device_remove_file(&battery->bat->dev, &battery_charge_rate_attr);
+ 	device_remove_file(&battery->bat->dev, &alarm_attr);
+ 	power_supply_unregister(battery->bat);
+ 	battery->bat = NULL;
