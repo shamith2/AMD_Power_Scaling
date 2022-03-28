@@ -2,9 +2,9 @@
 
 wget https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.16.17.tar.xz
 tar -xf linux-5.16.17.tar.xz
-sudo apt update && sudo apt install git build-essential bc xz-utils bison flex libssl-dev libelf-dev qt5-default
+sudo apt update && sudo apt install git build-essential bc xz-utils bison flex libssl-dev libelf-dev qt5-default dwarves zstd
 git clone https://www.github.com/shamith2/rl
-mv rl/AMD_Power_Scaling/scripts/battery_charging_rate/acpi_battery_change_charging_rate.patch .
+cp rl/AMD_Power_Scaling/scripts/battery_charging_rate/acpi_battery_change_charging_rate.patch .
 cd linux-5.16.17/
 cp -v /boot/config-$(uname -r) .config
 make xconfig
