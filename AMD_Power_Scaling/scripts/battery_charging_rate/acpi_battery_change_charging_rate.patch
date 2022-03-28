@@ -13,7 +13,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
   *
   *  Copyright (C) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
   *  Copyright (C) 2004-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
-@@ -614,6 +618,97 @@ static int acpi_battery_get_state(struct acpi_battery *battery)
+@@ -614,6 +618,109 @@ static int acpi_battery_get_state(struct acpi_battery *battery)
  	return result;
  }
  
@@ -33,6 +33,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
 +static int acpi_battery_change_charging_rate(struct acpi_battery *battery, const int charging_rate)
 +{
 +	acpi_status status = 0;
++	char *units = "mW";
 +
 +	// if battery is not present or battery is not charging or issue with charging adapter,
 +	// or battery is full or battery charging rate is undefined
@@ -44,7 +45,12 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
 +		return -ENODEV;
 +    	}
 +
-+	acpi_handle_debug(battery->device->handle, "Charging Rate is %d\n", battery->rate_now);
++	if (battery->power_unit == ACPI_BATTERY_POWER_UNIT_MA)
++	{
++		units = "mA";
++	}
++
++	acpi_handle_debug(battery->device->handle, "Charging Rate is %d [%s]\n", battery->rate_now, units);
 +
 +	// change battery charging rate
 +    	mutex_lock(&battery->lock);
@@ -57,7 +63,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
 +		return -ENODEV;
 +    	}
 +
-+	acpi_handle_debug(battery->device->handle, "Charging Rate set to %d\n", battery->rate_now);
++	acpi_handle_debug(battery->device->handle, "Charging Rate set to %d [%s]\n", battery->rate_now, units);
 +
 +	return 0;
 +}
@@ -66,6 +72,12 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
 +{
 +	struct acpi_battery *battery = to_acpi_battery(dev_get_drvdata(dev));
 +	int retVal = 0;
++	char *units = "mW";
++
++	if (battery->power_unit == ACPI_BATTERY_POWER_UNIT_MA)
++	{
++		units = "mA";
++	}
 +
 +	retVal = acpi_battery_get_state(battery);
 +
@@ -74,7 +86,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
 +		return AE_ERROR;
 +	}
 +
-+	return sprintf(buf, "%d\n", battery->rate_now);
++	return sprintf(buf, "%d [%s]\n", battery->rate_now, units);
 +}
 +
 +static ssize_t acpi_battery_change_charging_rate_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
@@ -111,7 +123,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
  static int acpi_battery_set_alarm(struct acpi_battery *battery)
  {
  	acpi_status status = 0;
-@@ -816,6 +911,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
+@@ -816,6 +923,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
  {
  	struct power_supply_config psy_cfg = { .drv_data = battery, };
  	bool full_cap_broken = false;
@@ -119,7 +131,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
  
  	if (!ACPI_BATTERY_CAPACITY_VALID(battery->full_charge_capacity) &&
  	    !ACPI_BATTERY_CAPACITY_VALID(battery->design_capacity))
-@@ -859,6 +955,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
+@@ -859,6 +967,7 @@ static int sysfs_add_battery(struct acpi_battery *battery)
  		return result;
  	}
  	battery_hook_add_battery(battery);
@@ -127,7 +139,7 @@ diff --git a/drivers/acpi/battery.c b/drivers/acpi/battery.c
  	return device_create_file(&battery->bat->dev, &alarm_attr);
  }
  
-@@ -870,6 +967,7 @@ static void sysfs_remove_battery(struct acpi_battery *battery)
+@@ -870,6 +979,7 @@ static void sysfs_remove_battery(struct acpi_battery *battery)
  		return;
  	}
  	battery_hook_remove_battery(battery);
