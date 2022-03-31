@@ -33,7 +33,7 @@ class PowerScaling(gym.Env):
             self.action_list = None
             self.action_space = spaces.Box(-1, 100, shape=(1,), dtype=np.int32)
         else:
-            self.action_list = np.array([-1, 22, 35, 54, 66, 73])
+            self.action_list = np.array([22, 35, 54, 66, 73])
             self.action_space = spaces.Discrete(len(self.action_list))
             
 
@@ -86,10 +86,7 @@ class PowerScaling(gym.Env):
 
         # calculate reward
         if _action < 20 or _action > 80:
-            if _action != -1:
-                reward = -np.inf
-            else:
-                reward = _more_reward
+            reward = -np.inf
         else:
             # slow charging
             if _action < _tau:
