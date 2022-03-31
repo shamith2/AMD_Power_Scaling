@@ -33,7 +33,7 @@ class PowerScaling(gym.Env):
             self.action_list = None
             self.action_space = spaces.Box(-1, 100, shape=(1,), dtype=np.int32)
         else:
-            self.action_list = np.array([22, 35, 54, 66, 73])
+            self.action_list = np.array([-1, 22, 35, 54, 66, 73])
             self.action_space = spaces.Discrete(len(self.action_list))
             
 
