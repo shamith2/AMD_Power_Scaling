@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
-import imp
-utils = imp.load_source("utils", "../../BCQ/discrete_BCQ/utils.py")
-discrete_BCQ = imp.load_source("dicrete_BCQ", "../../BCQ/discrete_BCQ/discrete_BCQ.py")
+import sys
+
+sys.path.append("../../BCQ/discrete_BCQ/")
+import utils, DQN, discrete_BCQ
 
 def generate_datapoints():
     # datapoint := TIME(int),MEMORY_USAGE(%),CPU_USAGE(%),SoC(%),IS_PLUGGED(int),CPU_TEMP(C),CPU_POWER(W),BATTERY_TEMP(C),GPU_TEMP(C),GPU_POWER(W),actions (Charge rate)
@@ -84,12 +85,11 @@ class Test_Agent(unittest.TestCase):
         env, _, state_dim, num_actions = utils.make_env("Power_Scaling:PowerScaling-v0", None)
 
         # Initialize and load policy
-        policy = discrete_BCQ.discrete_BCQ(
+        policy = DQN.DQN(
             0,
             num_actions,
             state_dim,
             "cpu",
-            0.3,
             parameters["discount"],
             parameters["optimizer"],
             parameters["optimizer_parameters"],
@@ -103,15 +103,17 @@ class Test_Agent(unittest.TestCase):
         )
 
         avg_reward = 0
-        state = env.reset()
-        env.create("state,actual_action,pred_action,reward", ".")
-        datapoints, actions = generate_datapoints()
-        
         actual_action = None
         pred_action = None
         reward = None
         actual_results = []
         pred_results = []
+
+        _ = env.reset()
+        env.create("state,actual_action,pred_action,reward", ".")
+        datapoints, actions = generate_datapoints()
+
+        policy.load(f"../../models/behavioral_Power_Scaling:PowerScaling-v0_0")
 
         for i in range(1, len(datapoints) + 1):
             state = datapoints[str(i)]
@@ -135,7 +137,7 @@ class Test_Agent(unittest.TestCase):
             state, reward, _, _ = env.step(action)
             avg_reward += reward
         
-        self.assertEqual(actual_results, pred_results)
+        self.assertCountEqual(actual_results, pred_results)
 
 if __name__ == "__main__":
     unittest.main()
