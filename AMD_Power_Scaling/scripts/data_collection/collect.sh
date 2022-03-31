@@ -27,7 +27,7 @@ function collect_data()
         battDCInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/energy_full_design)
         battCycleInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/cycle_count)
         battTempInfo=$(acpi -t | awk '{print $(NB==1)}' | sed 's/.*, *\([0-9.]*\)* degrees C*/\1/' | awk '{printf "%f", $1}')
-        battChargeRate=$(upower -e | grep 'BAT' | xargs -I{} upower -i {} | grep energy-rate | tr -d -c 0-9. | awk '{printf "%f", $1}')
+        battChargeRate=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/charging_rate | tr -cd [:digit:])
         echo "Done"
 
         echo -n "Writing to DataSet File... "
@@ -92,7 +92,7 @@ else
     fi
 
     echo ""
-    echo "Do you have the the following packages installed: acpi, upower"
+    echo "Do you have the the following packages installed: acpi"
     read -p "Enter [y] or n to continue... " to_install
     echo ""
 fi

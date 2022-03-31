@@ -121,12 +121,12 @@ class PowerScaling(gym.Env):
     def render(self, mode="human"):
         pass
 
-    def create(self, dir="results"):
+    def create(self, header, dir="results"):
         if not os.path.isdir(dir):
             os.mkdir(dir)
         
         with open(os.path.join(dir, 'report.txt'), 'w') as f:
-            f.write("state,action,reward")
+            f.write(header)
             f.write('\n')
 
     def write(self, obj, dir="results"):
@@ -190,7 +190,7 @@ def test(env):
     action = None
     reward = None
     total_reward = 0
-    env.create()
+    env.create("state,action,reward")
     
     for _ in range(50):
         env.write([observation, action, reward])
