@@ -158,9 +158,13 @@ def train_BCQ(env, replay_buffer, is_atari, num_actions, state_dim, device, args
 
 		evaluations.append(eval_policy(policy, args.env, args.seed, eval_timesteps=args.max_timesteps, episodic=args.episodic))
 		np.save(f"./results/BCQ_{setting}", evaluations)
+		policy.save(f"./models/BCQ_{setting}")
 
 		training_iters += int(parameters["eval_freq"])
 		print(f"Training iterations: {training_iters}")
+	
+	# save final model
+	policy.save(f"./models/BCQ_{setting}")
 
 
 # Runs policy for X episodes and returns average reward
