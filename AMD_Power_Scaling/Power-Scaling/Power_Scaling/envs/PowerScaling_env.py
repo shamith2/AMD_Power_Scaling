@@ -45,9 +45,9 @@ class PowerScaling(gym.Env):
         _theta = 45
         _gamma = 70
         _no_reward = 0
-        _less_penal = -100
+        _less_penal = -10
         _less_reward = 2
-        _more_penal = -200
+        _more_penal = -20
         _more_reward = 5
         _invalid = -1
 
