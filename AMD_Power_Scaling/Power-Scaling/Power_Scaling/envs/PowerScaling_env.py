@@ -40,9 +40,9 @@ class PowerScaling(gym.Env):
     def step(self, action):
         # hyperparamters
         _tau = 50
-        _omega = 15
+        _omega = 15 * 60
         _Omega = 10
-        _theta = 45
+        _theta = 45 * 60
         _gamma = 70
         _no_reward = 0
         _less_penal = -10
