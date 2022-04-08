@@ -90,29 +90,38 @@ class PowerScaling(gym.Env):
         else:
             # slow charging
             if _action < _tau:
+                reward = _more_reward
+                
                 if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
                     reward = _no_reward
+                    
                 # if battery is discharging and SoC has not reached _gamma
                 if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
                     if self.ctime > 0 and self.ctime < _omega:
                         reward = _more_penal
+                    else:
+                        reward = _more_reward
+                        
                 # if battery temperature is over _theta
-                elif self.state[2] > _theta:
+                if self.state[2] > _theta:
                     reward = _less_penal
-                else:
-                    reward = _more_reward
+                    
             else:
+                reward = _less_reward
+                
                 if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
                     reward = _no_reward
+                    
                 # if battery is charging for time >= _omega and SoC has reached _gamma
-                elif self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
+                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
                     if self.ctime >= _Omega: 
                         reward = _more_penal
+                    else:
+                        reward = _more_reward
+                        
                 # if battery temperature is over _theta
-                elif self.state[2] > _theta:
+                if self.state[2] > _theta:
                     reward = _more_penal
-                else:
-                    reward = _less_reward
         
         return self.state, reward, done, info
 
