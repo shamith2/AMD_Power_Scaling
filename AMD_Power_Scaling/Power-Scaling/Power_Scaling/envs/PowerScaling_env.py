@@ -93,7 +93,7 @@ class PowerScaling(gym.Env):
                 if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
                     reward = _no_reward
                 # if battery is discharging and SoC has not reached _gamma
-                elif self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
+                if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
                     if self.ctime > 0 and self.ctime < _omega:
                         reward = _more_penal
                 # if battery temperature is over _theta
