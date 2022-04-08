@@ -9,7 +9,7 @@ import gym
 from gym import spaces
 import numpy as np
 import subprocess
-# import time
+import time
 import os
 
 class PowerScaling(gym.Env):
@@ -73,7 +73,7 @@ class PowerScaling(gym.Env):
             self.prev_state = np.array(self.state, np.float64)
 
         # change battery charging rate
-        # time.sleep(1)
+        time.sleep(1)
 
         # get next state
         self.state = np.array(self.collect_state(), np.float64)
