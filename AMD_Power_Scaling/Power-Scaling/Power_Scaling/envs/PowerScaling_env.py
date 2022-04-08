@@ -91,9 +91,6 @@ class PowerScaling(gym.Env):
             # slow charging
             if _action < _tau:
                 reward = _more_reward
-                
-                if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
-                    reward = _no_reward
                     
                 # if battery is discharging and SoC has not reached _gamma
                 if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
@@ -105,12 +102,13 @@ class PowerScaling(gym.Env):
                 # if battery temperature is over _theta
                 if self.state[2] > _theta:
                     reward = _less_penal
-                    
-            else:
-                reward = _less_reward
                 
                 if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
                     reward = _no_reward
+                
+                    
+            else:
+                reward = _less_reward
                     
                 # if battery is charging for time >= _omega and SoC has reached _gamma
                 if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
@@ -122,6 +120,9 @@ class PowerScaling(gym.Env):
                 # if battery temperature is over _theta
                 if self.state[2] > _theta:
                     reward = _more_penal
+                
+                if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(0):
+                    reward = _no_reward
         
         return self.state, reward, done, info
 
