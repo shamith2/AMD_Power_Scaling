@@ -70,7 +70,7 @@ class PowerScaling(gym.Env):
         self.state, self.nnSpace = self.collect_state()
 
         # how long the system is charging
-        if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(1):
+        if self.prev_state[1] == np.float64(3) and self.state[1] == np.float64(1):
             self.ctime = 0
         elif self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1):
             self.ctime = int(time.time()) - self.ctime
@@ -117,9 +117,9 @@ class PowerScaling(gym.Env):
         battDir="""/sys/class/power_supply/"""
         battSoCInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/capacity | awk '{printf "%f", $1}'"""
         # capacity level status: Normal: 1, Full: 2
-        battCapLvlInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/capacity_level | awk '{if($1 == "Normal") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else {printf "%d", 0}}'"""
+        battCapLvlInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/capacity_level | awk '{if($1 == "Normal") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else if($1 == "High") {printf "%d", 3} else if($1 == "Critical") {printf "%d", 4} else if($1 == "Low") {printf "%d", 5} else {printf "%d", 0}}'"""
         # plug-in status: Discharging: 0, Charging: 1, Full: 2
-        battStatusInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/status | awk '{if($1 == "Charging") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else {printf "%d", 0}}'"""
+        battStatusInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/status | awk '{if($1 == "Charging") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else if($1 == "Discharging") {printf "%d", 3} else {printf "%d", 0}}'"""
         battVolInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/voltage_now | awk '{printf "%ld", $1}'"""
         battDVInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/voltage_min_design | awk '{printf "%ld", $1}'"""
         battPowInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/power_now | awk '{printf "%ld", $1}'"""
@@ -133,7 +133,7 @@ class PowerScaling(gym.Env):
         # data := (state, action, next state, reward, done)
         # state
         state_commands = [battSoCInfo, battStatusInfo, battTempInfo, battChargeRate, cpuInfo]
-        battery_commands = [battSoCInfo, timeInfo, battStatusInfo, battCapInfo, battCycleInfo, battVolInfo, battTempInfo, battChargeRate, battCapLvlInfo]
+        battery_commands = [battSoCInfo, timeInfo, battStatusInfo, battCapInfo, battCycleInfo, battVolInfo, battTempInfo, battChargeRate]
         doubleVar_commands = [battFCInfo, battDCInfo]
         stateEntry = tuple()
         batteryEntry = tuple()
@@ -193,7 +193,7 @@ class PowerScaling(gym.Env):
             # slow charging
             if action < _tau:
                 # if battery is discharging and SoC has not reached _gamma
-                if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
+                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(3) and self.state[0] < _gamma:
                     if self.ctime > 0 and self.ctime < _omega:
                         reward = _more_penal
                 # if battery temperature is over _theta
@@ -295,7 +295,7 @@ class PowerScaling(gym.Env):
         
         reward = reward_model(battery_parameters)
 
-        return reward        
+        return reward      
 
     
 # test function

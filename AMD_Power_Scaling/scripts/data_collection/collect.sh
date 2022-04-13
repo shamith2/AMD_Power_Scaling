@@ -16,9 +16,9 @@ function collect_data()
         
         battSoCInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/capacity)
         # capacity level status: Normal: 1, Full: 2
-        battCapLvlInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/capacity_level | awk '{if($1 == "Normal") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else {printf "%d", 0}}')
+        battCapLvlInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/capacity_level | awk '{if($1 == "Normal") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else if($1 == "High") {printf "%d", 3} else if($1 == "Critical") {printf "%d", 4} else if($1 == "Low") {printf "%d", 5} else {printf "%d", 0}}')
         # plug-in status: Discharging: 0, Charging: 1, Full: 2
-        battStatusInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/status | awk '{if($1 == "Charging") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else {printf "%d", 0}}')
+        battStatusInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/status | awk '{if($1 == "Charging") {printf "%d", 1} else if($1 == "Full") {printf "%d", 2} else if($1 == "Discharging") {printf "%d", 3} else {printf "%d", 0}}')
         battVolInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/voltage_now)
         battDVInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/voltage_min_design)
         battPowInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/power_now)
@@ -27,7 +27,8 @@ function collect_data()
         battDCInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/energy_full_design)
         battCycleInfo=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/cycle_count)
         battTempInfo=$(acpi -t | awk '{print $(NB==1)}' | sed 's/.*, *\([0-9.]*\)* degrees C*/\1/' | awk '{printf "%f", $1}')
-        battChargeRate=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/charging_rate | tr -cd [:digit:])
+        # battChargeRate=$(ls $battDir | grep BAT | xargs -I{} cat $battDir{}/charging_rate | tr -cd [:digit:])
+        battChargeRate=$(upower -e | grep 'BAT' | xargs -I{} upower -i {} | grep energy-rate | tr -d -c 0-9. | awk '{printf "%f", $1}')
         echo "Done"
 
         echo -n "Writing to DataSet File... "
@@ -61,8 +62,8 @@ then
     echo "  duration        int: how long to collect data; timestep taken from step"
     echo "  step            int: timestep to wait"
     echo "  timeunit        str: units of timestep {s/m/h/d}"
-    echo "  reset           int: 1 to restart data collection"
     echo "  -y or --yes     str: yes to all prompts"
+    echo "  reset           int: 1 to restart data collection"
     echo ""
     echo "If you get permission denied: run 'chmod +x ./collect.sh'"
     echo ""
@@ -74,7 +75,7 @@ echo "Welcome to AMD Power Scaling Data Collection for Linux Users"
 echo "Copyright (c) 2022 Shamith Achanta"
 echo ""
 
-if ([ "$6" = "-y" ] || [ "$6" = "--yes" ])
+if ([ "$5" = "-y" ] || [ "$5" = "--yes" ])
 then
     to_continue=y
     to_install=y
@@ -107,7 +108,7 @@ then
        create_dataset_file $filename 
     fi
     
-    if [[ -f $filename ]] && [ "$5" = "1" ]
+    if [[ -f $filename ]] && [ "$6" = "1" ]
     then
         rm $filename
         create_dataset_file $filename
