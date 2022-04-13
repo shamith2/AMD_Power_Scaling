@@ -11,6 +11,9 @@ import numpy as np
 import subprocess
 import time
 import os
+import sys
+import torch
+from datetime import datetime
 
 class PowerScaling(gym.Env):
     metadata = {"render.modes": ["human"]}
@@ -26,6 +29,7 @@ class PowerScaling(gym.Env):
         self.continuous = continuous
         self.prev_state = None
         self.state = None
+        self.nnSpace = None
         self.ctime = 0
 
         # action space
@@ -38,19 +42,6 @@ class PowerScaling(gym.Env):
             
 
     def step(self, action):
-        # hyperparamters
-        _tau = 50
-        _omega = 15
-        _Omega = 10
-        _theta = 45
-        _gamma = 70
-        _no_reward = 0
-        _less_penal = -100
-        _less_reward = 2
-        _more_penal = -200
-        _more_reward = 5
-        _invalid = -1
-
         reward = 0
         done = False
         info = {}
@@ -76,7 +67,7 @@ class PowerScaling(gym.Env):
         time.sleep(1)
 
         # get next state
-        self.state = np.array(self.collect_state(), np.float64)
+        self.state, self.nnSpace = self.collect_state()
 
         # how long the system is charging
         if self.prev_state[1] == np.float64(0) and self.state[1] == np.float64(1):
@@ -85,30 +76,8 @@ class PowerScaling(gym.Env):
             self.ctime = int(time.time()) - self.ctime
 
         # calculate reward
-        if _action < 20 or _action > 80:
-            reward = -np.inf
-        else:
-            # slow charging
-            if _action < _tau:
-                # if battery is discharging and SoC has not reached _gamma
-                if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
-                    if self.ctime > 0 and self.ctime < _omega:
-                        reward = _more_penal
-                # if battery temperature is over _theta
-                elif self.state[2] > _theta:
-                    reward = _less_penal
-                else:
-                    reward = _more_reward
-            else:
-                # if battery is charging for time >= _omega and SoC has reached _gamma
-                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
-                    if self.ctime >= _Omega: 
-                        reward = _more_penal
-                # if battery temperature is over _theta
-                elif self.state[2] > _theta:
-                    reward = _more_penal
-                else:
-                    reward = _less_reward
+        # reward = self.reward_function_logic(_action)
+        reward = self.reward_function_nn(self.nnSpace)
         
         return self.state, reward, done, info
 
@@ -139,6 +108,7 @@ class PowerScaling(gym.Env):
         pass
 
     def collect_state(self):
+        timeInfo="""date +%s"""
         memInfo="""free -t | awk 'NR==4{printf "%f", $3*100/$2}'"""
         cpuInfo="""top -bn1 | awk 'NR==3' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{printf "%f", 100-$1}'"""
         # TODO: GPU USAGE
@@ -159,26 +129,174 @@ class PowerScaling(gym.Env):
         battCycleInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/cycle_count | awk '{printf "%d", $1}'"""
         battTempInfo="""acpi -t | awk '{print $(NB==1)}' | sed 's/.*, *\([0-9.]*\)* degrees C*/\1/' | awk '{printf "%f", $1}'"""
         battChargeRate="""upower -e | grep 'BAT' | xargs -I{} upower -i {} | grep energy-rate | tr -d -c 0-9. | awk '{printf "%f", $1}'"""
-        
-        commands = [battSoCInfo, battStatusInfo, battTempInfo, battChargeRate, cpuInfo]
 
         # data := (state, action, next state, reward, done)
-        # state := (TIME,MEMORY_USAGE,CPU_USAGE,GPU_USAGE,BATTERY_CAPACITY,BATTERY_STATUS,BATTERY_VOLTAGE,BATTERY_POWER,BATTERY_ENERGY)
-
+        # state
+        state_commands = [battSoCInfo, battStatusInfo, battTempInfo, battChargeRate, cpuInfo]
+        battery_commands = [battSoCInfo, timeInfo, battStatusInfo, battCapInfo, battCycleInfo, battVolInfo, battTempInfo, battChargeRate, battCapLvlInfo]
+        doubleVar_commands = [battFCInfo, battDCInfo]
         stateEntry = tuple()
+        batteryEntry = tuple()
 
-        # stateEntry += (int(time.time()),)
-
-        for command in commands:
+        for command in state_commands:
             process = subprocess.run(command, capture_output=True, shell=True)
-                
             output = process.stdout.decode('utf-8')
+            
             if output != '':
                 stateEntry += (output,)
             else:
                 stateEntry += (0, )
+        
+        for command in battery_commands:
+            process = subprocess.run(command, capture_output=True, shell=True)
+            output = process.stdout.decode('utf-8')
+            
+            if output != '':
+                batteryEntry += (output,)
+            else:
+                batteryEntry += (0, )
+        
+        for i, command in enumerate(doubleVar_commands, start=1):
+            process = subprocess.run(command, capture_output=True, shell=True)
+            output = process.stdout.decode('utf-8')
 
-        return stateEntry
+            if output != '':
+                if i % 2 != 0:
+                    temp = output
+                else:
+                    temp = temp / output
+            else:
+                temp = 0
+            
+            if i % 2 == 0:
+                batteryEntry += (temp,)
+
+        return np.array(stateEntry, np.float64), np.array(batteryEntry, np.float64)
+    
+    def reward_function_logic(self, action):
+        # hyperparamters
+        _tau = 50
+        _omega = 15
+        _Omega = 10
+        _theta = 45
+        _gamma = 70
+        _no_reward = 0
+        _less_penal = -100
+        _less_reward = 2
+        _more_penal = -200
+        _more_reward = 5
+        _invalid = -1
+
+        if action < 20 or action > 80:
+            reward = -np.inf
+        else:
+            # slow charging
+            if action < _tau:
+                # if battery is discharging and SoC has not reached _gamma
+                if self.prev_state[1] != np.float64(0) and self.state[1] == np.float64(0) and self.state[0] < _gamma:
+                    if self.ctime > 0 and self.ctime < _omega:
+                        reward = _more_penal
+                # if battery temperature is over _theta
+                elif self.state[2] > _theta:
+                    reward = _less_penal
+                else:
+                    reward = _more_reward
+            else:
+                # if battery is charging for time >= _omega and SoC has reached _gamma
+                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
+                    if self.ctime >= _Omega: 
+                        reward = _more_penal
+                # if battery temperature is over _theta
+                elif self.state[2] > _theta:
+                    reward = _more_penal
+                else:
+                    reward = _less_reward
+        
+        return reward
+    
+    def reward_nn(self, input_size, hidden_layers, output_size):
+        class Feedforward(torch.nn.Module):
+            def __init__(self, input_size, hidden_layers, output_size):
+                super(Feedforward, self).__init__()
+                self.input_size = input_size
+                self.num_hidden_layers = hidden_layers
+                self.output_size = output_size
+                # layers
+                self.fc1 = torch.nn.Linear(self.input_size, self.num_hidden_layers)
+                self.fc2 = torch.nn.Linear(self.num_hidden_layers, self.num_hidden_layers)
+                self.fc3 = torch.nn.Linear(self.num_hidden_layers, self.output_size)
+                # activation functions
+                self.relu = torch.nn.ReLU()
+                self.softmax = torch.nn.Softmax()
+            
+            def forward(self, x):
+                hidden_layer_1 = self.fc1(x)
+                relu_1 = self.relu(hidden_layer_1)
+                hidden_layer_2 = self.fc2(relu_1)
+                relu_2 = self.relu(hidden_layer_2)
+                output_layer = self.fc3(relu_2)
+                output_layer = self.softmax(output_layer)
+                
+                return output_layer
+        
+        reward_model = Feedforward(input_size, hidden_layers, output_size)
+
+        return reward_model
+    
+    def train_reward_nn(self, train_data, train_epochs, batch_size):
+        reward_model = self.reward_nn(len(train_data), 10, 1)
+        criterion = torch.nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(reward_model.parameters(), lr=0.001, momentum=0.9)
+        trainloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=2)
+        
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if device == torch.device('cuda'):
+            reward_model.to(device)
+
+        # loop over the dataset multiple times
+        for epoch in range(train_epochs):
+            running_loss = 0.0
+            for i, data in enumerate(trainloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                if device == torch.device('cuda'):
+                    inputs, labels = data[0].to(device), data[1].to(device)
+                else:
+                    inputs, labels = data
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                outputs = reward_model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+
+                # print statistics
+                running_loss += loss.item()
+                # print every batch_size mini-batches
+                if i % batch_size == batch_size - 1:
+                    print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / batch_size:.3f}')
+                    running_loss = 0.0
+    
+        print("Saving Model...")
+        if not os.path.exists("./models"):
+            os.makedirs("./models")
+        
+        torch.save(reward_model, "./models/" + "reward_model_" + str(batch_size) + "_" + str(datetime.now().strftime("%m-%d-%H:%M:%S")) + ".pth")
+    
+    def reward_function_nn(self, battery_parameters):
+        filename = "./models/" + "reward_model.pth"
+        if not os.path.exists(filename):
+            print("No file named 'reward_model.pth'")
+            sys.exit(-1)
+        else:
+            reward_model = torch.load(filename)
+        
+        reward = reward_model(battery_parameters)
+
+        return reward        
+
     
 # test function
 def test(env):
