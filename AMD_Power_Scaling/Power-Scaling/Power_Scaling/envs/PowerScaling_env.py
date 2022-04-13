@@ -110,7 +110,7 @@ class PowerScaling(gym.Env):
     def collect_state(self):
         timeInfo="""date +%s"""
         memInfo="""free -t | awk 'NR==4{printf "%f", $3*100/$2}'"""
-        cpuInfo="""top -bn1 | awk 'NR==3' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{printf "%f", 100-$1}'"""
+        cpuInfo="""top -bn1 | awk 'NR==3' | sed 's/.*, *\([0-9.]*\)%* id.*/\\1/' | awk '{printf "%f", 100-$1}'"""
         # TODO: GPU USAGE
         gpuInfo="""echo -n '0'"""
         
@@ -127,7 +127,7 @@ class PowerScaling(gym.Env):
         battFCInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/energy_full | awk '{printf "%ld", $1}'"""
         battDCInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/energy_full_design | awk '{printf "%ld", $1}'"""
         battCycleInfo="""ls """ + battDir + """ | grep BAT | xargs -I{} cat """ + battDir + """{}/cycle_count | awk '{printf "%d", $1}'"""
-        battTempInfo="""acpi -t | awk '{print $(NB==1)}' | sed 's/.*, *\([0-9.]*\)* degrees C*/\1/' | awk '{printf "%f", $1}'"""
+        battTempInfo="""acpi -t | awk '{print $(NB==1)}' | sed 's/.*, *\([0-9.]*\)* degrees C*/\\1/' | awk '{printf "%f", $1}'"""
         battChargeRate="""upower -e | grep 'BAT' | xargs -I{} upower -i {} | grep energy-rate | tr -d -c 0-9. | awk '{printf "%f", $1}'"""
 
         # data := (state, action, next state, reward, done)
@@ -305,9 +305,9 @@ def test(env):
     action = None
     reward = None
     total_reward = 0
-    env.create("state,action,reward")
+    env.create("[SoC, Charging Status, Battery Temperature, Battery Charging Rate, CPU Usage],action,reward")
     
-    for _ in range(50):
+    for _ in range(10):
         env.write([observation, action, reward])
         action = np.random.randint(1, 5)
         observation, reward, done, info = env.step(action)
