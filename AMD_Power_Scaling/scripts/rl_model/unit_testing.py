@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
 import sys
+import torch
 
-sys.path.append("../../BCQ/discrete_BCQ/")
+sys.path.append("./BCQ/discrete_BCQ/")
 import utils, DQN, discrete_BCQ
 
 def generate_datapoints():
@@ -83,13 +84,14 @@ class Test_Agent(unittest.TestCase):
         }
 
         env, _, state_dim, num_actions = utils.make_env("Power_Scaling:PowerScaling-v0", None)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize and load policy
-        policy = DQN.DQN(
+        dqn_policy = DQN.DQN(
             0,
             num_actions,
             state_dim,
-            "cpu",
+            device,
             parameters["discount"],
             parameters["optimizer"],
             parameters["optimizer_parameters"],
@@ -102,6 +104,24 @@ class Test_Agent(unittest.TestCase):
             parameters["eval_eps"]
         )
 
+        bcq_policy = discrete_BCQ.discrete_BCQ(
+		0,
+		num_actions,
+		state_dim,
+		device,
+		0.3,
+		parameters["discount"],
+		parameters["optimizer"],
+		parameters["optimizer_parameters"],
+		parameters["polyak_target_update"],
+		parameters["target_update_freq"],
+		parameters["tau"],
+		parameters["initial_eps"],
+		parameters["end_eps"],
+		parameters["eps_decay_period"],
+		parameters["eval_eps"]
+	)
+
         avg_reward = 0
         actual_action = None
         pred_action = None
@@ -113,11 +133,11 @@ class Test_Agent(unittest.TestCase):
         env.create("state,actual_action,pred_action,reward", ".")
         datapoints, actions = generate_datapoints()
 
-        policy.load(f"../../models/behavioral_Power_Scaling:PowerScaling-v0_0")
+        bcq_policy.load(f"./models/BCQ_Power_Scaling:PowerScaling-v0_0")
 
         for i in range(1, len(datapoints) + 1):
             state = datapoints[str(i)]
-            action = policy.select_action(np.array(state), eval=True)
+            action = bcq_policy.select_action(np.array(state), eval=True)
             
             if action < 50:
                 pred_action = "__slow__"

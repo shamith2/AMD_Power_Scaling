@@ -89,8 +89,8 @@ class PowerScaling(gym.Env):
             self.ctime = int(time.time()) - self.ctime
 
         # calculate reward
-        # reward = self.reward_function_logic(_action)
-        reward = self.reward_function_nn(self.nnSpace)
+        reward = self.reward_function_logic(_action)
+        # reward = self.reward_function_nn(self.nnSpace)
         
         return self.state, reward, done, info
 

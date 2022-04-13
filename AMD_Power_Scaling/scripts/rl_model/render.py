@@ -26,7 +26,7 @@ def render_script(args):
     seed = args.seed
     goal = args.goal
 
-    for keys, dir in zip(results.keys(), ["../../results/BCQ_", "../../results/behavioral_", "../../results/buffer_performance_"]):
+    for keys, dir in zip(results.keys(), ["./results/BCQ_", "./results/behavioral_", "./results/buffer_performance_"]):
         results[keys] = np.load(dir + str(env_name) + "_" + str(tstep) + "_" + str(seed) + ".npy")
     
-    plot_figure("../../plots/" + str(env_name), results, str(tstep), seed, goal)
+    plot_figure("./plots/" + str(env_name), results, str(tstep), seed, goal)
