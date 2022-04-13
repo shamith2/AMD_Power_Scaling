@@ -32,6 +32,19 @@ class PowerScaling(gym.Env):
         self.nnSpace = None
         self.ctime = 0
 
+        # Hyperparameters
+        self._tau = 50
+        self._omega = 15 * 60
+        self._Omega = 45 * 60
+        self._theta = 45
+        self._gamma = 70
+        self._no_reward = 0
+        self._less_penal = -10
+        self._less_reward = 2
+        self._more_penal = -20
+        self._more_reward = 7
+        self._invalid = -1
+
         # action space
         if self.continuous:
             self.action_list = None
@@ -174,43 +187,30 @@ class PowerScaling(gym.Env):
         return np.array(stateEntry, np.float64), np.array(batteryEntry, np.float64)
     
     def reward_function_logic(self, action):
-        # hyperparamters
-        _tau = 50
-        _omega = 15
-        _Omega = 10
-        _theta = 45
-        _gamma = 70
-        _no_reward = 0
-        _less_penal = -100
-        _less_reward = 2
-        _more_penal = -200
-        _more_reward = 5
-        _invalid = -1
-
         if action < 20 or action > 80:
             reward = -np.inf
         else:
             # slow charging
-            if action < _tau:
+            if action < self._tau:
                 # if battery is discharging and SoC has not reached _gamma
-                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(3) and self.state[0] < _gamma:
-                    if self.ctime > 0 and self.ctime < _omega:
-                        reward = _more_penal
+                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(3) and self.state[0] < self._gamma:
+                    if self.ctime > 0 and self.ctime < self._omega:
+                        reward = self._more_penal
                 # if battery temperature is over _theta
-                elif self.state[2] > _theta:
-                    reward = _less_penal
+                elif self.state[2] > self._theta:
+                    reward = self._less_penal
                 else:
-                    reward = _more_reward
+                    reward = self._more_reward
             else:
                 # if battery is charging for time >= _omega and SoC has reached _gamma
-                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= _gamma:
-                    if self.ctime >= _Omega: 
-                        reward = _more_penal
+                if self.prev_state[1] == np.float64(1) and self.state[1] == np.float64(1) and self.state[0] >= self._gamma:
+                    if self.ctime >= self._Omega: 
+                        reward = self._more_penal
                 # if battery temperature is over _theta
-                elif self.state[2] > _theta:
-                    reward = _more_penal
+                elif self.state[2] > self._theta:
+                    reward = self._more_penal
                 else:
-                    reward = _less_reward
+                    reward = self._less_reward
         
         return reward
     
@@ -293,7 +293,14 @@ class PowerScaling(gym.Env):
         else:
             reward_model = torch.load(filename)
         
-        reward = reward_model(battery_parameters)
+        SoH = reward_model(battery_parameters[:, -1])
+
+        if SoH >= 0.8:
+            reward = self._more_reward
+        if SoH > 0.5 and SoH < 0.8:
+            reward = self._less_reward
+        else:
+            reward = self._more_penal
 
         return reward      
 
