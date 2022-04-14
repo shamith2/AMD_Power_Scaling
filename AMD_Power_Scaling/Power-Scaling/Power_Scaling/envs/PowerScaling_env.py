@@ -44,6 +44,7 @@ class PowerScaling(gym.Env):
         self._more_penal = -20
         self._more_reward = 7
         self._invalid = -1
+        self.weight = 0.75
 
         # action space
         if self.continuous:
@@ -90,7 +91,7 @@ class PowerScaling(gym.Env):
 
         # calculate reward
         reward = self.reward_function_logic(_action)
-        # reward = self.reward_function_nn(self.nnSpace)
+        # reward = self.reward_function_nn(self.nnSpace, _action)
         
         return self.state, reward, done, info
 
@@ -285,7 +286,7 @@ class PowerScaling(gym.Env):
         
         torch.save(reward_model, "./models/" + "reward_model_" + str(batch_size) + "_" + str(datetime.now().strftime("%m-%d-%H:%M:%S")) + ".pth")
     
-    def reward_function_nn(self, battery_parameters):
+    def reward_function_nn(self, battery_parameters, action):
         filename = "./models/" + "reward_model.pth"
         if not os.path.exists(filename):
             print("No file named 'reward_model.pth'")
@@ -295,12 +296,16 @@ class PowerScaling(gym.Env):
         
         SoH = reward_model(battery_parameters[:, -1])
 
+        # assign weighted reward based on logic reward function and predicted SoH
+        reward = 0
+        reward += self.weight * self.reward_function_logic(action)
+
         if SoH >= 0.8:
-            reward = self._more_reward
+            reward += (1 - self.weight) * self._more_reward
         if SoH > 0.5 and SoH < 0.8:
-            reward = self._less_reward
+            reward += (1 - self.weight) * self._less_reward
         else:
-            reward = self._more_penal
+            reward += (1 - self.weight) * self._more_penal
 
         return reward      
 
