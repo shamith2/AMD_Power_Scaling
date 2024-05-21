@@ -1,6 +1,0 @@
-# ignore directory
-data/
-
-# ignore files
-.ipynb_checkpoints/
-__pycache__/
