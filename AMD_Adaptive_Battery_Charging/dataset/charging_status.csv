@@ -1,0 +1,4 @@
+Day,Date,Time,Charging Status,State of Charge,Battery Temperature (C),Battery Capacity (mAh),Charge Rate (mW), Time to Discharge, Battery Voltage (mV), Cycle Count, Battery Health (%)
+2,03/07/2023,14:11,1,99,-20.160000000000025,50290,0,-2,13012,5,95.64473183720045
+3,16/12/1401,14:45,1,99,-20.160000000000025,50290,0,-2,13012,5,95.64473183720045
+3,16/12/1401,15:06,1,99,-22.160000000000025,50290,0,-2,13012,5,95.64473183720045
