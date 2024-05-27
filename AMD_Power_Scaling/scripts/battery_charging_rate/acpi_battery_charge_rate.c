@@ -2,10 +2,7 @@
  * Module Description:
  *   ACPI Battery Driver module to change Battery Charging Rate
  *   used with /drivers/acpi/battery.c
- * 
- * Copyright (c) 2022 Shamith Achanta
- * Report bugs to Shamith Achanta <shamith2@illinois.edu>
-
+ *
  * References:  https://uefi.org/specs/ACPI/6.4/10_Power_Source_and_Power_Meter_Devices/Power_Source_and_Power_Meter_Devices.html
  */
 
