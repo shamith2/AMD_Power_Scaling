@@ -1,8 +1,5 @@
 # collect_win.py
 # collects system data on windows machines
-# 
-# Copyright (c) 2022 Shamith Achanta, Sumedh Vaidyanathan, Alex Yuan
-# Report Bugs to Sumedh Vaidyanathan, Alex Yuan
 #
 
 import psutil
