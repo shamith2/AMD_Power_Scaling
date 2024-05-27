@@ -4,7 +4,7 @@
  *
  *	Revision 3.0:
  *		Added feature to change charging rate of battery from userspace
- *		Written by Shamith Achanta <shamith2@illinois.edu>
+ *		Written by Shamith Achanta <achantashamith007@gmail.com>
  *
  *  Copyright (C) 2007 Alexey Starikovskiy <astarikovskiy@suse.de>
  *  Copyright (C) 2004-2007 Vladimir Lebedev <vladimir.p.lebedev@intel.com>
