@@ -1,8 +1,5 @@
 # collect_linux.py
 # collects system data on linux machines
-# 
-# Copyright (c) 2022 Shamith Achanta
-# Report Bugs to Shamith Achanta <shamith2@illinois.edu>
 #
 
 import subprocess
