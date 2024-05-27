@@ -1,8 +1,5 @@
 # PowerScaling_env.py
 # creates new environment PowerScaling
-# 
-# Copyright (c) 2022 Shamith Achanta
-# Report Bugs to Shamith Achanta <shamith2@illinois.edu>
 #
 
 import gym
