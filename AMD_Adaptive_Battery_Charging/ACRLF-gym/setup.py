@@ -1,9 +1,6 @@
 # setup.py
 # downloads dependency packages for the required environment
 # add required packages in install_requires
-# 
-# Copyright (c) 2023 Advanced Micro Devices Inc.
-# Report Bugs to Shamith Achanta <Shamith.Achanta@amd.com>
 #
 
 from setuptools import setup
