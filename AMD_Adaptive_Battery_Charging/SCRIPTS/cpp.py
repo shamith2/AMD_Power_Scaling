@@ -1,8 +1,5 @@
 # cpp.py
 # module for Charging Pattern Predictor
-# 
-# Copyright (c) 2023 Advanced Micro Devices Inc.
-# Report Bugs to Shamith Achanta <Shamith.Achanta@amd.com>
 #
 
 import os
