@@ -3,8 +3,6 @@
  *   ACPI Battery Driver module to change Battery Charging Rate
  *   These functions need to be either added to or need to replace the existing functions in /drivers/acpi/battery.c
  * 
- * Copyright (c) 2022 Shamith Achanta
- * Report bugs to Shamith Achanta <shamith2@illinois.edu>
  *
  * References:  https://github.com/torvalds/linux/blob/master/drivers/acpi/battery.c,
  *              https://www.kernel.org/doc/html/latest/filesystems/sysfs.html,
