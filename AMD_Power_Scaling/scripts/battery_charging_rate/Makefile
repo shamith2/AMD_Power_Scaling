@@ -1,6 +1,4 @@
 # Makefile for ACPI Battery Driver
-# Copyright (c) 2022 Shamith Achanta
-# Report bugs to Shamith Achanta <shamith2@illinois.edu>
 #
 
 ACPI_DIR := /drivers/acpi
