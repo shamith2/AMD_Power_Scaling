@@ -1,8 +1,5 @@
 # ACRLF_env.py
 # creates new environment ACRLF
-# 
-# Copyright (c) 2023 Advanced Micro Devices Inc.
-# Report Bugs to Shamith Achanta <Shamith.Achanta@amd.com>
 #
 
 import gymnasium as gym
